@@ -1,5 +1,4 @@
-# huxi-buffalo-crimedata
-This README is a work-in-progress.
+# Scripts
 
 ## Backend setup
 Code was made with Python 3.6 in mind. It might work with older versions of Python, but I do not recommend it.
