@@ -12,46 +12,26 @@ library( leaflet )
 buf_cameras = mongo(collection = "cameras", db = "buffalo") # create connection, database and collection
 buf_crimes = mongo(collection = "crimes", db = "buffalo") # create connection, database and collection
 
-# buf_coords <- c( lng = -78.8784 , lat = 42.8864 )   #42.8864° N, 78.8784° W
-# content <- paste(sep = "<br/>",
-#       "<b>The birthplace of R</b>",
-#       buf_coords[1], buf_coords[2]
-# )
-# desc <- jsonlite::toJSON( c( 'Coordinates' = buf_coords, 'Descriptions' = "The birthplace of R"))
-# buf_map <- leaflet() %>%
-#   addTiles() %>%  # Add default OpenStreetMap map tiles
-#   addMarkers(lng=buf_coords[1], lat=buf_coords[2], popup=content)
-
-# getDescription <- function( queryResult ){
-#   
-# }
-
 plotCrimes <- function( crimeCollection, options ){
   crimes <- ''
   if( options$dateStart != options$dateEnd ){
     limiter <- paste0('{"incident_datetime":{"$lte" : "',  format(options$dateEnd, format="%m/%d/%Y"), '", "$gte" : "', format(options$dateStart, format="%m/%d/%Y"),'"} }')
     print(limiter)
-    crimes <- crimeCollection$find(limiter, limit = 500)
+    crimes <- crimeCollection$find(limiter, limit = options$limit)
   }else {
     crimes <- crimeCollection$find()
   }
     
   
-  # { "_id" : ObjectId("5b10af05ea49e74d62957cb2"), "incident_id" : 728765590, "case_number" : "15-2411024", 
-  # "incident_datetime" : "08/29/2015 07:30:00 AM", "incident_type_primary" : "UUV", 
-  # "incident_description" : "UUV", "clearance_type" : "", "address_1" : "VIRGINIA ST & MAIN ST", 
-  # "address_2" : "", "city" : "BUFFALO", "state" : "NY", "zip" : "", "country" : "", 
-  # "latitude" : 43.0064897171289, "longitude" : -78.880779986495, "created_at" : "08/30/2015 06:07:23 AM", 
-  # "updated_at" : "09/05/2015 06:16:04 AM", "location" : "-78.880779986495,43.0064897171289", 
-  # "hour_of_day" : 7, "day_of_week" : "Saturday", "parent_incident_type" : "Theft of Vehicle", "closestCamera" : 3.305976175310567 }
+  # incident_id, case_number, incident_datetime, incident_type_primary, incident_description, clearance_type, address_1,
+  # address_2, city, state, zip, country, latitude, longitude, created_at, updated_at, location, hour_of_day,
+  # day_of_week, parent_incident_type, closestCamera
   
   buf_map <- leaflet() %>%
     addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png') %>%  # Add default OpenStreetMap map tiles
     addCircles( lng=crimes$longitude, lat=crimes$latitude, radius=5, 
                 color="#ffa500", stroke = TRUE, fillOpacity = 0.5, popup=getDescription( crimes ))
-  
-  # map <- ggmap( city_map ) + geom_point( data = d, aes(x=lon, y=lat), col = "#a000ee", cex = .1 )
-  # map <- plotCrimes( buf_crimes, buf_map )
+
   return(buf_map)
 }
 
@@ -66,8 +46,6 @@ getDescription <- function( crime ){
   return(desc)
 }
 
-# map <- buf_map # plotCrimes(crimeCollection = buf_crimes, city_map = buf_map)
-
 # Define UI for application that draws a histogram
 ui <- fluidPage(
    
@@ -77,6 +55,7 @@ ui <- fluidPage(
    # Sidebar with a slider input for number of bins 
    sidebarLayout(
      sidebarPanel(
+       numericInput("limit", "Max number of results", 500, min = 1),
        sliderInput("bins",
                    "Number of bins:",
                    min = 1,
@@ -122,7 +101,7 @@ server <- function(input, output) {
   
    output$distPlot <- renderLeaflet({
      map
-     d <- data.frame( dateStart = input$dateRange[1], dateEnd = input$dateRange[2] )
+     d <- data.frame( dateStart = input$dateRange[1], dateEnd = input$dateRange[2], limit = input$limit )
      plotCrimes(crimeCollection = buf_crimes, options = d)
    })
 }
