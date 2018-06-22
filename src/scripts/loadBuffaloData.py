@@ -69,8 +69,12 @@ def main():
 	print("Loading Crimes...")
 	keys = crimeData[0]
 	for i in range(1, len(crimeData)):
+		lon = payload['longitude']
+		lat = payload['latitude']
+		if lon == 0. and lat == 0.:
+			continue
 		payload = getJson(keys, crimeData[i])
-		payload['location'] = str(payload['longitude']) + ',' + str(payload['latitude'] )
+		payload['location'] = str(lon) + ',' + str(lat)
 		buffalo.crimes.insert_one(payload)
 	print("Crimes loaded!")
 
